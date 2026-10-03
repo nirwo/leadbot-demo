@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead-Capture Chatbot Demo (sample content)</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#eef2f7;color:#1f2937}
+  header{background:#1d4ed8;color:#fff;padding:14px 20px}
+  header h1{margin:0;font-size:18px}
+  header p{margin:4px 0 0;font-size:13px;opacity:.9}
+  .wrap{max-width:980px;margin:20px auto;padding:0 16px;display:grid;grid-template-columns:1fr 300px;gap:16px}
+  @media(max-width:760px){.wrap{grid-template-columns:1fr}}
+  .chat{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);display:flex;flex-direction:column;height:560px}
+  .log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:80%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.4;white-space:pre-line}
+  .bot{background:#e8eefc;align-self:flex-start;border-bottom-left-radius:4px}
+  .me{background:#1d4ed8;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 10px}
+  .chips button{border:1px solid #1d4ed8;background:#fff;color:#1d4ed8;border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+  .chips button:hover{background:#1d4ed8;color:#fff}
+  form{display:flex;border-top:1px solid #e5e7eb}
+  form input{flex:1;border:0;padding:14px;font-size:14px;outline:none;border-radius:0 0 0 12px}
+  form button{border:0;background:#1d4ed8;color:#fff;padding:0 20px;font-size:14px;cursor:pointer;border-radius:0 0 12px 0}
+  aside{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:16px;align-self:start}
+  aside h2{margin:0 0 4px;font-size:15px}
+  aside .sub{font-size:12px;color:#6b7280;margin-bottom:12px}
+  .lead{font-size:13px;border-top:1px solid #e5e7eb;padding:8px 0;display:flex;justify-content:space-between;gap:8px}
+  .lead b{color:#6b7280;font-weight:600}
+  .empty{color:#9ca3af;font-size:13px}
+  .note{font-size:12px;color:#6b7280;max-width:980px;margin:0 auto 24px;padding:0 16px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Maple Grove Property Management (sample business)</h1>
+  <p>Demo: a site chatbot that answers renter questions at any hour and captures the lead. Sample content only.</p>
+</header>
+<div class="wrap">
+  <div class="chat">
+    <div class="log" id="log"></div>
+    <div class="chips" id="chips"></div>
+    <form id="f"><input id="in" placeholder="Type a question..." autocomplete="off"><button>Send</button></form>
+  </div>
+  <aside>
+    <h2>What the manager receives</h2>
+    <div class="sub">Sent to your inbox or a Google Sheet the moment a visitor finishes.</div>
+    <div id="lead"><div class="empty">No lead yet. Ask about a viewing in the chat to see one appear.</div></div>
+  </aside>
+</div>
+<p class="note">All listings, prices and policies above are fictional placeholders. In a real install the bot is trained on your own listings, FAQs and after-hours rules. This demo is scripted and runs fully offline.</p>
+<script>
+const log=document.getElementById('log'),chips=document.getElementById('chips'),f=document.getElementById('f'),inp=document.getElementById('in'),leadBox=document.getElementById('lead');
+const lead={name:'',phone:'',movein:'',interest:''};
+let step=null;
+const faq=[
+ {k:['price','rent','cost','how much'],a:'Sample rents: 2BR townhome from $1,650/mo, 3BR house from $2,150/mo. Want to schedule a viewing?'},
+ {k:['pet','dog','cat'],a:'Sample policy: pets are welcome on most homes with a $300 deposit and $35/mo pet rent. Want me to check a specific home?'},
+ {k:['apply','application','fee','screen'],a:'Applications are $50 per adult and take about 10 minutes online. A decision usually comes within 2 business days.'},
+ {k:['deposit','move in','move-in cost'],a:'The security deposit is typically one month of rent, due when the lease is signed.'},
+ {k:['hours','open','after hours','weekend','emergency'],a:'The office is open Mon-Fri 9-5, but I am here 24/7. For maintenance emergencies, tenants use the after-hours line on the portal.'},
+ {k:['available','vacan','listing','homes'],a:'Currently available (sample): a 2BR townhome and a 3BR house. Want a viewing for either one?'}
+];
+function say(t,who){const d=document.createElement('div');d.className='msg '+who;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight}
+function setChips(arr){chips.innerHTML='';arr.forEach(t=>{const b=document.createElement('button');b.textContent=t;b.onclick=()=>handle(t);chips.appendChild(b)})}
+function showLead(){leadBox.innerHTML='';[['Name',lead.name],['Phone',lead.phone],['Move-in',lead.movein],['Interested in',lead.interest]].forEach(([a,b])=>{if(!b)return;const r=document.createElement('div');r.className='lead';r.innerHTML='<b>'+a+'</b><span></span>';r.lastChild.textContent=b;leadBox.appendChild(r)})}
+function handle(text){
+  say(text,'me');
+  const t=text.toLowerCase();
+  setTimeout(()=>{
+    if(step==='name'){lead.name=text;showLead();step='phone';say('Thanks, '+text.split(' ')[0]+'. What is the best phone number to reach you?','bot');return}
+    if(step==='phone'){lead.phone=text;showLead();step='movein';say('And when are you hoping to move in?','bot');return}
+    if(step==='movein'){lead.movein=text;showLead();step=null;say('All set. A leasing agent will text you within one business hour to confirm a time. Anything else I can help with?','bot');setChips(['Pet policy','Application fee','Hours']);return}
+    if(/view|tour|schedule|visit|see it|book/.test(t)){lead.interest='Viewing request';step='name';showLead();say('Happy to set that up. What is your name?','bot');return}
+    for(const x of faq){if(x.k.some(k=>t.includes(k))){say(x.a,'bot');setChips(['Schedule a viewing','Pet policy','Application fee']);return}}
+    say('Good question. I want you to get the right answer, so I can have a leasing agent follow up. Would you like to leave your details?','bot');setChips(['Schedule a viewing']);
+  },450);
+}
+f.onsubmit=e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;inp.value='';handle(v)};
+say('Hi! I am the Maple Grove assistant. I can answer questions about rentals any time, day or night. What would you like to know?','bot');
+setChips(['What homes are available?','Pet policy','How much is rent?','Schedule a viewing']);
+</script>
+</body>
+</html>
